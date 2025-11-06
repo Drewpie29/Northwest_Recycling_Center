@@ -1,31 +1,19 @@
-// Reference: javascript_log_in_with_replit blueprint
+// Reference: javascript_auth_all_persistance blueprint
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import { insertRecyclingEntrySchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
+  // Auth middleware - sets up /api/register, /api/login, /api/logout, /api/user
   await setupAuth(app);
-
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
 
   // Dashboard stats endpoint
   app.get('/api/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       
       const [totalWeight, totalEntries, topMaterial, topLocation, recentEntries] = await Promise.all([
         storage.getTotalWeightByUser(userId),
@@ -51,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new recycling entry
   app.post('/api/entries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       console.log('[POST /api/entries] Request received', { userId, body: req.body });
       
       // Validate request body
@@ -79,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all entries for the current user
   app.get('/api/entries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const entries = await storage.getEntriesByUser(userId);
       res.json(entries);
     } catch (error) {
@@ -91,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reports endpoint with detailed summaries
   app.get('/api/reports', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       
       const [entries, materialSummary, locationSummary] = await Promise.all([
         storage.getEntriesByUser(userId),

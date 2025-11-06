@@ -1,19 +1,25 @@
-// Reference: javascript_database blueprint and javascript_log_in_with_replit blueprint
+// Reference: javascript_database blueprint and javascript_auth_all_persistance blueprint
 import {
   users,
   recyclingEntries,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type RecyclingEntry,
   type InsertRecyclingEntry,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
-  // User operations - mandatory for Replit Auth
+  // User operations - for authentication
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  sessionStore: session.SessionStore;
   
   // Recycling entry operations
   createEntry(entry: InsertRecyclingEntry): Promise<RecyclingEntry>;
@@ -31,23 +37,27 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations - mandatory for Replit Auth
+  sessionStore: session.SessionStore;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ pool, createTableIfMissing: true });
+  }
+
+  // User operations - for authentication
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
       .returning();
     return user;
   }
