@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import logoUrl from "@assets/generated_images/University_logo_badge_3de327ba.png";
+import logoUrl from "@assets/northwest_missouri_state_university_2_logo_1762444519893.jpg";
 
 export default function Landing() {
   return (
@@ -26,9 +26,6 @@ export default function Landing() {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          <p className="text-center text-foreground">
-            Track and manage campus recycling activities, view statistics, and contribute to a sustainable future.
-          </p>
           <Button
             className="w-full"
             size="lg"

@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import logoUrl from "@assets/generated_images/University_logo_badge_3de327ba.png";
+import logoUrl from "@assets/northwest_missouri_state_university_2_logo_1762444519893.jpg";
 
 const menuItems = [
   {
