@@ -40,7 +40,10 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.SessionStore;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ pool, createTableIfMissing: true });
+    this.sessionStore = new PostgresSessionStore({ 
+      pool,
+      createTableIfMissing: false,
+    });
   }
 
   // User operations - for authentication

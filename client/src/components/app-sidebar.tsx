@@ -13,7 +13,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import logoUrl from "@assets/northwest_missouri_state_university_2_logo_1762444519893.jpg";
 
@@ -36,8 +36,16 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const [location] = useLocation();
-  const { user } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { user, logoutMutation } = useAuth();
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        setLocation("/auth");
+      },
+    });
+  };
 
   const getInitials = (firstName?: string | null, lastName?: string | null) => {
     if (!firstName && !lastName) return "U";
@@ -102,11 +110,12 @@ export function AppSidebar() {
           variant="outline"
           size="sm"
           className="w-full"
-          onClick={() => window.location.href = "/api/logout"}
+          onClick={handleLogout}
+          disabled={logoutMutation.isPending}
           data-testid="button-logout"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Log Out
+          {logoutMutation.isPending ? "Logging out..." : "Log Out"}
         </Button>
       </SidebarFooter>
     </Sidebar>
