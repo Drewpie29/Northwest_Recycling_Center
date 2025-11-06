@@ -48,7 +48,7 @@ export default function Entry() {
       weight: 0,
       location: "",
       notes: "",
-      collectedAt: new Date().toISOString().slice(0, 16),
+      collectedAt: new Date() as any,
     },
   });
 
@@ -111,7 +111,15 @@ export default function Entry() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
+            <form onSubmit={form.handleSubmit(
+              (data) => {
+                console.log('[Form Submit] Valid data:', data);
+                mutation.mutate(data);
+              },
+              (errors) => {
+                console.error('[Form Submit] Validation errors:', errors);
+              }
+            )} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}

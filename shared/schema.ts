@@ -59,6 +59,7 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
   materialType: z.string().min(1, "Material type is required"),
   location: z.string().min(1, "Location is required"),
   notes: z.string().optional(),
+  collectedAt: z.coerce.date(),
 });
 
 export type InsertRecyclingEntry = z.infer<typeof insertRecyclingEntrySchema>;
