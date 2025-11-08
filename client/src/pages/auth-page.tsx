@@ -44,9 +44,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Form Section */}
-      <div className="flex items-center justify-center p-8">
+    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <div className="flex justify-center mb-4">
@@ -129,6 +127,7 @@ export default function AuthPage() {
                                 type="email"
                                 placeholder="Enter email"
                                 {...field}
+                                value={field.value || ""}
                                 data-testid="input-email"
                               />
                             </FormControl>
@@ -148,6 +147,7 @@ export default function AuthPage() {
                                 <Input
                                   placeholder="First name"
                                   {...field}
+                                  value={field.value || ""}
                                   data-testid="input-firstname"
                                 />
                               </FormControl>
@@ -166,6 +166,7 @@ export default function AuthPage() {
                                 <Input
                                   placeholder="Last name"
                                   {...field}
+                                  value={field.value || ""}
                                   data-testid="input-lastname"
                                 />
                               </FormControl>
@@ -193,7 +194,7 @@ export default function AuthPage() {
                   <div className="text-center">
                     <Button
                       type="button"
-                      variant="link"
+                      variant="ghost"
                       onClick={() => {
                         setIsLogin(!isLogin);
                         form.reset();
@@ -210,41 +211,6 @@ export default function AuthPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Hero Section */}
-      <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-primary/90 to-primary p-12">
-        <div className="max-w-lg text-center space-y-6">
-          <div className="flex justify-center">
-            <div className="bg-primary-foreground/20 p-6 rounded-full">
-              <Recycle className="w-20 h-20 text-primary-foreground" />
-            </div>
-          </div>
-          <h2 className="text-4xl font-bold text-primary-foreground">
-            Northwest Missouri State University
-          </h2>
-          <h3 className="text-2xl font-semibold text-primary-foreground/90">
-            Recycling Center Management
-          </h3>
-          <p className="text-lg text-primary-foreground/80">
-            Track and manage campus recycling activities, view detailed statistics, and contribute to a more sustainable future for our university community.
-          </p>
-          <div className="grid grid-cols-3 gap-6 pt-8">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-foreground">500+</div>
-              <div className="text-sm text-primary-foreground/70">Tons Recycled</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-foreground">50+</div>
-              <div className="text-sm text-primary-foreground/70">Active Users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-foreground">8</div>
-              <div className="text-sm text-primary-foreground/70">Locations</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
