@@ -99,7 +99,7 @@ export function AppSidebar() {
             <div className="text-sm font-medium truncate" data-testid="text-user-name">
               {user?.firstName && user?.lastName
                 ? `${user.firstName} ${user.lastName}`
-                : user?.email || "User"}
+                : user?.username || "User"}
             </div>
             <div className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
               {user?.email || ""}
