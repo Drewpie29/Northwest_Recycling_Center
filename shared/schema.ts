@@ -8,9 +8,41 @@ import {
   decimal,
   integer,
   text,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Material types for recycling collection
+export const materialTypeEnum = pgEnum("material_type", [
+  "Aluminum",
+  "Cardboard",
+  "Glass",
+  "Paper - Mixed",
+  "Paper - Books",
+  "Paper - Newspaper",
+  "Paper-White",
+  "Plastic - #1 PET",
+  "Plastic - #2 Colored",
+  "Plastic - #2 Natural",
+  "Scrap Metal",
+  "Other - Recycled",
+]);
+
+export const MATERIAL_TYPES = [
+  "Aluminum",
+  "Cardboard",
+  "Glass",
+  "Paper - Mixed",
+  "Paper - Books",
+  "Paper - Newspaper",
+  "Paper-White",
+  "Plastic - #1 PET",
+  "Plastic - #2 Colored",
+  "Plastic - #2 Natural",
+  "Scrap Metal",
+  "Other - Recycled",
+] as const;
 
 // Reference: javascript_log_in_with_replit blueprint
 // Session storage table - mandatory for Replit Auth
@@ -53,7 +85,7 @@ export type User = typeof users.$inferSelect;
 export const recyclingEntries = pgTable("recycling_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  materialType: varchar("material_type").notNull(), // e.g., "Paper", "Plastic", "Glass", "Metal", "Cardboard", "Electronics"
+  materialType: materialTypeEnum("material_type").notNull(),
   weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // in pounds
   location: varchar("location").notNull(), // e.g., "Colden Hall", "Student Union", "Library"
   notes: text("notes"),
@@ -66,7 +98,9 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
   createdAt: true,
 }).extend({
   weight: z.coerce.number().positive("Weight must be positive"),
-  materialType: z.string().min(1, "Material type is required"),
+  materialType: z.enum(MATERIAL_TYPES, {
+    errorMap: () => ({ message: "Please select a valid material type" }),
+  }),
   location: z.string().min(1, "Location is required"),
   notes: z.string().optional(),
   collectedAt: z.coerce.date(),

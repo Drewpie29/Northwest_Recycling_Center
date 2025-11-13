@@ -43,7 +43,7 @@ The design follows a system-based approach prioritizing efficiency and data clar
 - PostgreSQL session store for persistent login sessions
 
 **Authentication Flow:**
-The application uses Replit Auth (OpenID Connect) with Passport.js strategy. Users authenticate through Replit's OAuth flow, and sessions are stored in PostgreSQL with a 7-day TTL. The `isAuthenticated` middleware protects all API routes requiring user context.
+The application uses username/password authentication with Passport.js local strategy. User passwords are securely hashed using Node.js crypto.scrypt with random salts. Sessions are stored in PostgreSQL with a 7-day TTL. The `isAuthenticated` middleware protects all API routes requiring user context.
 
 **API Structure:**
 RESTful endpoints organized by domain:
@@ -64,15 +64,33 @@ The `storage.ts` module implements a repository pattern (`IStorage` interface) w
 
 **Schema Design:**
 Three primary tables:
-1. `sessions` - Stores Express session data (required for Replit Auth)
-2. `users` - User profiles synced from Replit OIDC claims
+1. `sessions` - Stores Express session data (required for username/password authentication)
+2. `users` - User profiles with username/password credentials
 3. `recycling_entries` - Core domain data tracking individual recycling activities
+
+**Material Types:**
+The system tracks 12 specific categories of recyclable materials:
+- Aluminum
+- Cardboard
+- Glass
+- Paper - Mixed
+- Paper - Books
+- Paper - Newspaper
+- Paper-White
+- Plastic - #1 PET
+- Plastic - #2 Colored
+- Plastic - #2 Natural
+- Scrap Metal
+- Other - Recycled
+
+These material types are enforced at the database level using a PostgreSQL enum and validated on the frontend using Zod schemas.
 
 **Key Design Decisions:**
 - UUID primary keys for all tables using PostgreSQL's `gen_random_uuid()`
 - `decimal(10, 2)` for weight measurements to ensure precision
 - Timestamps for audit trails (`createdAt`, `collectedAt`)
 - Foreign key relationships enforce referential integrity (entries → users)
+- Material types use PostgreSQL enum for data integrity and validation
 
 **Schema Validation:**
 Drizzle-Zod integration generates Zod schemas from database schema, ensuring consistent validation between database constraints and API input validation.
@@ -80,9 +98,10 @@ Drizzle-Zod integration generates Zod schemas from database schema, ensuring con
 ### External Dependencies
 
 **Authentication:**
-- Replit Auth (OpenID Connect) - Handles user authentication and profile management
-- OIDC discovery endpoint: `https://replit.com/oidc` (configurable via `ISSUER_URL`)
-- Required environment variables: `REPL_ID`, `SESSION_SECRET`
+- Username/password authentication with Passport.js local strategy
+- Password hashing using Node.js crypto.scrypt with random salts
+- Session management with PostgreSQL-backed session store
+- Required environment variables: `SESSION_SECRET`
 
 **Database:**
 - Neon PostgreSQL serverless database

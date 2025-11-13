@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { insertRecyclingEntrySchema, type InsertRecyclingEntry } from "@shared/schema";
+import { insertRecyclingEntrySchema, type InsertRecyclingEntry, MATERIAL_TYPES } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -14,17 +14,6 @@ import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
-
-const materialTypes = [
-  "Paper",
-  "Plastic",
-  "Glass",
-  "Metal",
-  "Cardboard",
-  "Electronics",
-  "Batteries",
-  "Other",
-];
 
 const locations = [
   "Colden Hall",
@@ -44,7 +33,7 @@ export default function Entry() {
   const form = useForm<InsertRecyclingEntry>({
     resolver: zodResolver(insertRecyclingEntrySchema),
     defaultValues: {
-      materialType: "",
+      materialType: undefined,
       weight: 0,
       location: "",
       notes: "",
@@ -134,7 +123,7 @@ export default function Entry() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {materialTypes.map((type) => (
+                          {MATERIAL_TYPES.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
                             </SelectItem>
