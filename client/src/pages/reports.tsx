@@ -20,16 +20,9 @@ interface MaterialSummary {
   count: number;
 }
 
-interface LocationSummary {
-  location: string;
-  totalWeight: number;
-  count: number;
-}
-
 interface ReportsData {
   entries: RecyclingEntry[];
   materialSummary: MaterialSummary[];
-  locationSummary: LocationSummary[];
 }
 
 export default function Reports() {
@@ -41,13 +34,12 @@ export default function Reports() {
     if (!data) return;
     
     const csv = [
-      ["Date", "Material", "Weight (lbs)", "Location", "Notes"].join(","),
+      ["Date", "Material", "Weight (lbs)", "Notes"].join(","),
       ...data.entries.map((entry) =>
         [
           new Date(entry.collectedAt).toLocaleDateString(),
           entry.materialType,
           Number(entry.weight).toFixed(2),
-          entry.location,
           `"${entry.notes || ""}"`,
         ].join(",")
       ),
@@ -82,87 +74,45 @@ export default function Reports() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">By Material Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-6 w-16" />
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">By Material Type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+              ))}
+            </div>
+          ) : data?.materialSummary && data.materialSummary.length > 0 ? (
+            <div className="space-y-3">
+              {data.materialSummary.map((item) => (
+                <div
+                  key={item.materialType}
+                  className="flex items-center justify-between p-3 rounded-md bg-muted/30"
+                  data-testid={`material-summary-${item.materialType}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{item.materialType}</Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {item.count} {item.count === 1 ? "entry" : "entries"}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ) : data?.materialSummary && data.materialSummary.length > 0 ? (
-              <div className="space-y-3">
-                {data.materialSummary.map((item) => (
-                  <div
-                    key={item.materialType}
-                    className="flex items-center justify-between p-3 rounded-md bg-muted/30"
-                    data-testid={`material-summary-${item.materialType}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary">{item.materialType}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {item.count} {item.count === 1 ? "entry" : "entries"}
-                      </span>
-                    </div>
-                    <div className="font-semibold text-primary">
-                      {item.totalWeight.toFixed(1)} lbs
-                    </div>
+                  <div className="font-semibold text-primary">
+                    {item.totalWeight.toFixed(1)} lbs
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">No data available</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">By Location</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-6 w-16" />
-                  </div>
-                ))}
-              </div>
-            ) : data?.locationSummary && data.locationSummary.length > 0 ? (
-              <div className="space-y-3">
-                {data.locationSummary.map((item) => (
-                  <div
-                    key={item.location}
-                    className="flex items-center justify-between p-3 rounded-md bg-muted/30"
-                    data-testid={`location-summary-${item.location}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary">{item.location}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {item.count} {item.count === 1 ? "entry" : "entries"}
-                      </span>
-                    </div>
-                    <div className="font-semibold text-primary">
-                      {item.totalWeight.toFixed(1)} lbs
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">No data available</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No data available</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -183,7 +133,6 @@ export default function Reports() {
                     <TableHead>Date</TableHead>
                     <TableHead>Material</TableHead>
                     <TableHead>Weight (lbs)</TableHead>
-                    <TableHead>Location</TableHead>
                     <TableHead className="hidden md:table-cell">Notes</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -199,7 +148,6 @@ export default function Reports() {
                       <TableCell className="font-medium">
                         {Number(entry.weight).toFixed(1)}
                       </TableCell>
-                      <TableCell>{entry.location}</TableCell>
                       <TableCell className="hidden md:table-cell max-w-xs truncate">
                         {entry.notes || "-"}
                       </TableCell>

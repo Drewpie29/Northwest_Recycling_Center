@@ -31,9 +31,7 @@ export interface IStorage {
   getTotalWeightByUser(userId: string): Promise<number>;
   getTotalEntriesByUser(userId: string): Promise<number>;
   getTopMaterialByUser(userId: string): Promise<string>;
-  getTopLocationByUser(userId: string): Promise<string>;
   getMaterialSummary(userId: string): Promise<Array<{ materialType: string; totalWeight: number; count: number }>>;
-  getLocationSummary(userId: string): Promise<Array<{ location: string; totalWeight: number; count: number }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -132,21 +130,6 @@ export class DatabaseStorage implements IStorage {
     return result[0]?.materialType || "N/A";
   }
 
-  async getTopLocationByUser(userId: string): Promise<string> {
-    const result = await db
-      .select({
-        location: recyclingEntries.location,
-        total: sql<number>`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`,
-      })
-      .from(recyclingEntries)
-      .where(eq(recyclingEntries.userId, userId))
-      .groupBy(recyclingEntries.location)
-      .orderBy(desc(sql`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`))
-      .limit(1);
-    
-    return result[0]?.location || "N/A";
-  }
-
   async getMaterialSummary(userId: string): Promise<Array<{ materialType: string; totalWeight: number; count: number }>> {
     const result = await db
       .select({
@@ -161,25 +144,6 @@ export class DatabaseStorage implements IStorage {
     
     return result.map(r => ({
       materialType: r.materialType,
-      totalWeight: Number(r.totalWeight),
-      count: Number(r.count),
-    }));
-  }
-
-  async getLocationSummary(userId: string): Promise<Array<{ location: string; totalWeight: number; count: number }>> {
-    const result = await db
-      .select({
-        location: recyclingEntries.location,
-        totalWeight: sql<number>`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(recyclingEntries)
-      .where(eq(recyclingEntries.userId, userId))
-      .groupBy(recyclingEntries.location)
-      .orderBy(desc(sql`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`));
-    
-    return result.map(r => ({
-      location: r.location,
       totalWeight: Number(r.totalWeight),
       count: Number(r.count),
     }));

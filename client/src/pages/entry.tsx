@@ -15,17 +15,6 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
-const locations = [
-  "Colden Hall",
-  "Student Union",
-  "Library",
-  "Valk Center",
-  "Admin Building",
-  "Residence Halls",
-  "Dining Hall",
-  "Other",
-];
-
 export default function Entry() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -35,7 +24,6 @@ export default function Entry() {
     defaultValues: {
       materialType: undefined,
       weight: 0,
-      location: "",
       notes: "",
       collectedAt: new Date() as any,
     },
@@ -151,31 +139,6 @@ export default function Entry() {
                           data-testid="input-weight"
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-location">
-                            <SelectValue placeholder="Select location" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {locations.map((loc) => (
-                            <SelectItem key={loc} value={loc}>
-                              {loc}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

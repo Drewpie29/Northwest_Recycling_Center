@@ -15,11 +15,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
-      const [totalWeight, totalEntries, topMaterial, topLocation, recentEntries] = await Promise.all([
+      const [totalWeight, totalEntries, topMaterial, recentEntries] = await Promise.all([
         storage.getTotalWeightByUser(userId),
         storage.getTotalEntriesByUser(userId),
         storage.getTopMaterialByUser(userId),
-        storage.getTopLocationByUser(userId),
         storage.getRecentEntries(userId, 5),
       ]);
 
@@ -27,7 +26,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalWeight,
         totalEntries,
         topMaterial,
-        topLocation,
         recentEntries,
       });
     } catch (error) {
@@ -81,16 +79,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
-      const [entries, materialSummary, locationSummary] = await Promise.all([
+      const [entries, materialSummary] = await Promise.all([
         storage.getEntriesByUser(userId),
         storage.getMaterialSummary(userId),
-        storage.getLocationSummary(userId),
       ]);
 
       res.json({
         entries,
         materialSummary,
-        locationSummary,
       });
     } catch (error) {
       console.error("Error fetching reports:", error);

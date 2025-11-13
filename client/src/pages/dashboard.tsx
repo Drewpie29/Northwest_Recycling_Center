@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Recycle, Scale, MapPin, TrendingUp } from "lucide-react";
+import { PlusCircle, Recycle, Scale, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 import type { RecyclingEntry } from "@shared/schema";
 
@@ -10,7 +10,6 @@ interface DashboardStats {
   totalWeight: number;
   totalEntries: number;
   topMaterial: string;
-  topLocation: string;
   recentEntries: RecyclingEntry[];
 }
 
@@ -36,7 +35,7 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Total Weight</CardTitle>
@@ -89,25 +88,6 @@ export default function Dashboard() {
                   {stats?.topMaterial || "N/A"}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">most recycled</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Top Location</CardTitle>
-            <MapPin className="w-5 h-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-10 w-24" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold truncate" data-testid="text-top-location">
-                  {stats?.topLocation || "N/A"}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">most active location</p>
               </>
             )}
           </CardContent>

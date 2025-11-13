@@ -87,7 +87,6 @@ export const recyclingEntries = pgTable("recycling_entries", {
   userId: varchar("user_id").notNull().references(() => users.id),
   materialType: materialTypeEnum("material_type").notNull(),
   weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // in pounds
-  location: varchar("location").notNull(), // e.g., "Colden Hall", "Student Union", "Library"
   notes: text("notes"),
   collectedAt: timestamp("collected_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -101,7 +100,6 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
   materialType: z.enum(MATERIAL_TYPES, {
     errorMap: () => ({ message: "Please select a valid material type" }),
   }),
-  location: z.string().min(1, "Location is required"),
   notes: z.string().optional(),
   collectedAt: z.coerce.date(),
 });
