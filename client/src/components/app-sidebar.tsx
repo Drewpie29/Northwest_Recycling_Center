@@ -24,7 +24,7 @@ const menuItems = [
     icon: Home,
   },
   {
-    title: "Add Entry",
+    title: "Log",
     url: "/entry",
     icon: PlusCircle,
   },
