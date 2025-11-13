@@ -10,8 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { RecyclingEntry } from "@shared/schema";
-import { FileText, Download } from "lucide-react";
+import type { RecyclingEntry, CompostEntry } from "@shared/schema";
+import { FileText, Download, Recycle, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MaterialSummary {
@@ -23,6 +23,7 @@ interface MaterialSummary {
 interface ReportsData {
   entries: RecyclingEntry[];
   materialSummary: MaterialSummary[];
+  compostEntries: CompostEntry[];
 }
 
 export default function Reports() {
@@ -30,17 +31,16 @@ export default function Reports() {
     queryKey: ["/api/reports"],
   });
 
-  const exportData = () => {
+  const exportRecyclingData = () => {
     if (!data) return;
     
     const csv = [
-      ["Date", "Material", "Recyclable Weight (lbs)", "Compost Weight (lbs)", "Notes"].join(","),
+      ["Date", "Material", "Weight (lbs)", "Notes"].join(","),
       ...data.entries.map((entry) =>
         [
           new Date(entry.collectedAt).toLocaleDateString(),
           entry.materialType,
           Number(entry.weight).toFixed(2),
-          entry.compostWeight ? Number(entry.compostWeight).toFixed(2) : "0.00",
           `"${entry.notes || ""}"`,
         ].join(",")
       ),
@@ -55,24 +55,36 @@ export default function Reports() {
     window.URL.revokeObjectURL(url);
   };
 
+  const exportCompostData = () => {
+    if (!data) return;
+    
+    const csv = [
+      ["Month", "Weight (lbs)", "Notes"].join(","),
+      ...data.compostEntries.map((entry) =>
+        [
+          entry.month,
+          Number(entry.weight).toFixed(2),
+          `"${entry.notes || ""}"`,
+        ].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `compost-report-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Detailed analytics and data export
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={exportData}
-          disabled={!data || data.entries.length === 0}
-          data-testid="button-export"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Detailed analytics and data export
+        </p>
       </div>
 
       <Card className="max-w-2xl">
@@ -115,60 +127,133 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">All Entries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recycling Entries */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Recycle className="w-5 h-5 text-primary" />
+                <CardTitle className="text-xl font-semibold">Recycling Entries</CardTitle>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportRecyclingData}
+                disabled={!data || data.entries.length === 0}
+                data-testid="button-export-recycling"
+              >
+                <Download className="w-3 h-3 mr-2" />
+                Export
+              </Button>
             </div>
-          ) : data?.entries && data.entries.length > 0 ? (
-            <div className="rounded-md border overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Material</TableHead>
-                    <TableHead>Recyclable (lbs)</TableHead>
-                    <TableHead>Compost (lbs)</TableHead>
-                    <TableHead className="hidden md:table-cell">Notes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.entries.map((entry) => (
-                    <TableRow key={entry.id} data-testid={`row-entry-${entry.id}`}>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(entry.collectedAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{entry.materialType}</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {Number(entry.weight).toFixed(1)}
-                      </TableCell>
-                      <TableCell className="font-medium text-muted-foreground">
-                        {entry.compostWeight ? Number(entry.compostWeight).toFixed(1) : "0.0"}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell max-w-xs truncate">
-                        {entry.notes || "-"}
-                      </TableCell>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : data?.entries && data.entries.length > 0 ? (
+              <div className="rounded-md border overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Material</TableHead>
+                      <TableHead>Weight (lbs)</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {data.entries.map((entry) => (
+                      <TableRow key={entry.id} data-testid={`row-recycling-${entry.id}`}>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {new Date(entry.collectedAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">{entry.materialType}</Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {Number(entry.weight).toFixed(1)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No recycling entries</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Compost Entries */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Leaf className="w-5 h-5 text-primary" />
+                <CardTitle className="text-xl font-semibold">Monthly Compost</CardTitle>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportCompostData}
+                disabled={!data || data.compostEntries.length === 0}
+                data-testid="button-export-compost"
+              >
+                <Download className="w-3 h-3 mr-2" />
+                Export
+              </Button>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No entries to display</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : data?.compostEntries && data.compostEntries.length > 0 ? (
+              <div className="rounded-md border overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Month</TableHead>
+                      <TableHead>Weight (lbs)</TableHead>
+                      <TableHead className="hidden md:table-cell">Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.compostEntries.map((entry) => (
+                      <TableRow key={entry.id} data-testid={`row-compost-${entry.id}`}>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {entry.month}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {Number(entry.weight).toFixed(1)}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell max-w-xs truncate text-sm text-muted-foreground">
+                          {entry.notes || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No compost entries</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
