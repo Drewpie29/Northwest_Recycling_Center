@@ -34,12 +34,13 @@ export default function Reports() {
     if (!data) return;
     
     const csv = [
-      ["Date", "Material", "Weight (lbs)", "Notes"].join(","),
+      ["Date", "Material", "Recyclable Weight (lbs)", "Compost Weight (lbs)", "Notes"].join(","),
       ...data.entries.map((entry) =>
         [
           new Date(entry.collectedAt).toLocaleDateString(),
           entry.materialType,
           Number(entry.weight).toFixed(2),
+          entry.compostWeight ? Number(entry.compostWeight).toFixed(2) : "0.00",
           `"${entry.notes || ""}"`,
         ].join(",")
       ),
@@ -132,7 +133,8 @@ export default function Reports() {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Material</TableHead>
-                    <TableHead>Weight (lbs)</TableHead>
+                    <TableHead>Recyclable (lbs)</TableHead>
+                    <TableHead>Compost (lbs)</TableHead>
                     <TableHead className="hidden md:table-cell">Notes</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -147,6 +149,9 @@ export default function Reports() {
                       </TableCell>
                       <TableCell className="font-medium">
                         {Number(entry.weight).toFixed(1)}
+                      </TableCell>
+                      <TableCell className="font-medium text-muted-foreground">
+                        {entry.compostWeight ? Number(entry.compostWeight).toFixed(1) : "0.0"}
                       </TableCell>
                       <TableCell className="hidden md:table-cell max-w-xs truncate">
                         {entry.notes || "-"}

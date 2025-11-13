@@ -15,8 +15,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
-      const [totalWeight, totalEntries, topMaterial, recentEntries] = await Promise.all([
+      const [totalWeight, totalCompostWeight, totalEntries, topMaterial, recentEntries] = await Promise.all([
         storage.getTotalWeightByUser(userId),
+        storage.getTotalCompostWeightByUser(userId),
         storage.getTotalEntriesByUser(userId),
         storage.getTopMaterialByUser(userId),
         storage.getRecentEntries(userId, 5),
@@ -24,6 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         totalWeight,
+        totalCompostWeight,
         totalEntries,
         topMaterial,
         recentEntries,

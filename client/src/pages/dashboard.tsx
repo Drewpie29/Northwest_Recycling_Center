@@ -8,6 +8,7 @@ import type { RecyclingEntry } from "@shared/schema";
 
 interface DashboardStats {
   totalWeight: number;
+  totalCompostWeight: number;
   totalEntries: number;
   topMaterial: string;
   recentEntries: RecyclingEntry[];
@@ -35,10 +36,10 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Total Weight</CardTitle>
+            <CardTitle className="text-lg font-medium">Recyclables</CardTitle>
             <Scale className="w-5 h-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -50,6 +51,25 @@ export default function Dashboard() {
                   {stats?.totalWeight.toFixed(1) || "0.0"}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">pounds recycled</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Compost</CardTitle>
+            <Recycle className="w-5 h-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-10 w-24" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold" data-testid="text-total-compost">
+                  {stats?.totalCompostWeight.toFixed(1) || "0.0"}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">pounds composted</p>
               </>
             )}
           </CardContent>
@@ -127,9 +147,15 @@ export default function Dashboard() {
                       <span className="font-medium">{entry.materialType}</span>
                       <span className="text-muted-foreground">•</span>
                       <span className="font-semibold text-primary">{Number(entry.weight).toFixed(1)} lbs</span>
+                      {entry.compostWeight && parseFloat(entry.compostWeight) > 0 && (
+                        <>
+                          <span className="text-muted-foreground">+</span>
+                          <span className="font-semibold text-muted-foreground">{Number(entry.compostWeight).toFixed(1)} lbs compost</span>
+                        </>
+                      )}
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
-                      {entry.location} • {new Date(entry.collectedAt).toLocaleDateString()}
+                      {new Date(entry.collectedAt).toLocaleDateString()}
                     </div>
                     {entry.notes && (
                       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">

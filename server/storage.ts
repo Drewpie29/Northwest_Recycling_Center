@@ -29,6 +29,7 @@ export interface IStorage {
   
   // Statistics operations
   getTotalWeightByUser(userId: string): Promise<number>;
+  getTotalCompostWeightByUser(userId: string): Promise<number>;
   getTotalEntriesByUser(userId: string): Promise<number>;
   getTopMaterialByUser(userId: string): Promise<string>;
   getMaterialSummary(userId: string): Promise<Array<{ materialType: string; totalWeight: number; count: number }>>;
@@ -100,6 +101,15 @@ export class DatabaseStorage implements IStorage {
   async getTotalWeightByUser(userId: string): Promise<number> {
     const result = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(${recyclingEntries.weight} AS NUMERIC)), 0)` })
+      .from(recyclingEntries)
+      .where(eq(recyclingEntries.userId, userId));
+    
+    return Number(result[0]?.total || 0);
+  }
+
+  async getTotalCompostWeightByUser(userId: string): Promise<number> {
+    const result = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(${recyclingEntries.compostWeight} AS NUMERIC)), 0)` })
       .from(recyclingEntries)
       .where(eq(recyclingEntries.userId, userId));
     

@@ -24,6 +24,7 @@ export default function Entry() {
     defaultValues: {
       materialType: undefined,
       weight: 0,
+      compostWeight: 0,
       notes: "",
       collectedAt: new Date() as any,
     },
@@ -128,7 +129,7 @@ export default function Entry() {
                   name="weight"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Weight (lbs)</FormLabel>
+                      <FormLabel>Recyclable Weight (lbs)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -137,6 +138,28 @@ export default function Entry() {
                           {...field}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           data-testid="input-weight"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="compostWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Compost Weight (lbs)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          placeholder="0.0"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          data-testid="input-compost-weight"
                         />
                       </FormControl>
                       <FormMessage />
