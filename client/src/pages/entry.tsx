@@ -191,7 +191,13 @@ export default function Entry() {
           <CardContent>
             <Form {...recyclingForm}>
               <form onSubmit={recyclingForm.handleSubmit(
-                (data) => recyclingMutation.mutate(data)
+                (data) => {
+                  console.log('[Recycling Form] Submitting data:', data);
+                  recyclingMutation.mutate(data);
+                },
+                (errors) => {
+                  console.error('[Recycling Form] Validation errors:', errors);
+                }
               )} className="space-y-4">
                 <FormField
                   control={recyclingForm.control}
@@ -230,7 +236,7 @@ export default function Entry() {
                           step="0.1"
                           placeholder="0.0"
                           {...field}
-                          value={field.value === 0 || field.value === "" ? "" : field.value}
+                          value={field.value === 0 ? "" : field.value}
                           onChange={(e) => {
                             const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                             field.onChange(isNaN(val) ? 0 : val);
@@ -346,7 +352,7 @@ export default function Entry() {
                           step="0.1"
                           placeholder="0.0"
                           {...field}
-                          value={field.value === 0 || field.value === "" ? "" : field.value}
+                          value={field.value === 0 ? "" : field.value}
                           onChange={(e) => {
                             const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                             field.onChange(isNaN(val) ? 0 : val);
