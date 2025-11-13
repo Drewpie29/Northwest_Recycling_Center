@@ -39,7 +39,7 @@ export default function Entry() {
     resolver: zodResolver(insertRecyclingEntrySchema),
     defaultValues: {
       materialType: undefined,
-      weight: "" as any,
+      weight: 0,
       notes: "",
       collectedAt: new Date() as any,
     },
@@ -50,7 +50,7 @@ export default function Entry() {
     resolver: zodResolver(insertCompostEntrySchema),
     defaultValues: {
       month: getCurrentMonth(),
-      weight: "" as any,
+      weight: 0,
       notes: "",
     },
   });
@@ -79,7 +79,7 @@ export default function Entry() {
     } else {
       compostForm.reset({
         month: selectedMonth,
-        weight: "" as any,
+        weight: 0,
         notes: "",
       });
     }
@@ -99,7 +99,7 @@ export default function Entry() {
       });
       recyclingForm.reset({
         materialType: undefined,
-        weight: "" as any,
+        weight: 0,
         notes: "",
         collectedAt: new Date() as any,
       });
@@ -230,8 +230,11 @@ export default function Entry() {
                           step="0.1"
                           placeholder="0.0"
                           {...field}
-                          value={field.value === 0 ? "" : field.value}
-                          onChange={(e) => field.onChange(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+                          value={field.value === 0 || field.value === "" ? "" : field.value}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                            field.onChange(isNaN(val) ? 0 : val);
+                          }}
                           data-testid="input-recycling-weight"
                         />
                       </FormControl>
@@ -343,8 +346,11 @@ export default function Entry() {
                           step="0.1"
                           placeholder="0.0"
                           {...field}
-                          value={field.value === 0 ? "" : field.value}
-                          onChange={(e) => field.onChange(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+                          value={field.value === 0 || field.value === "" ? "" : field.value}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                            field.onChange(isNaN(val) ? 0 : val);
+                          }}
                           data-testid="input-compost-weight"
                         />
                       </FormControl>
