@@ -26,9 +26,17 @@ export default function Entry() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
-  // Current month in YYYY-MM format
-  const getCurrentMonth = () => {
+  // Get current time in US Central timezone
+  const getCentralTime = () => {
     const now = new Date();
+    // Convert to Central Time (America/Chicago)
+    const centralTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+    return centralTime;
+  };
+  
+  // Current month in YYYY-MM format (Central Time)
+  const getCurrentMonth = () => {
+    const now = getCentralTime();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   };
   
@@ -41,7 +49,7 @@ export default function Entry() {
       materialType: undefined,
       weight: 0,
       notes: "",
-      collectedAt: new Date() as any,
+      collectedAt: getCentralTime() as any,
     },
   });
 
@@ -101,7 +109,7 @@ export default function Entry() {
         materialType: undefined,
         weight: 0,
         notes: "",
-        collectedAt: new Date() as any,
+        collectedAt: getCentralTime() as any,
       });
     },
     onError: (error: Error) => {
@@ -254,12 +262,17 @@ export default function Entry() {
                   name="collectedAt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Collection Date & Time</FormLabel>
+                      <FormLabel>Collection Date & Time (Central)</FormLabel>
                       <FormControl>
                         <Input
                           type="datetime-local"
                           {...field}
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
+                          value={field.value ? (() => {
+                            const d = new Date(field.value);
+                            const offset = d.getTimezoneOffset();
+                            const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+                            return localDate.toISOString().slice(0, 16);
+                          })() : ""}
                           onChange={(e) => field.onChange(e.target.value)}
                           data-testid="input-collected-at"
                         />
