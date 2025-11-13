@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   index,
+  uniqueIndex,
   jsonb,
   pgTable,
   timestamp,
@@ -117,7 +118,7 @@ export const compostEntries = pgTable("compost_entries", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  uniqueUserMonth: index("unique_user_month").on(table.userId, table.month).unique(),
+  uniqueUserMonth: uniqueIndex("unique_user_month").on(table.userId, table.month),
 }));
 
 export const insertCompostEntrySchema = createInsertSchema(compostEntries).omit({
