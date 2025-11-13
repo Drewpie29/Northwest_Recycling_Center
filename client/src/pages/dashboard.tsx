@@ -147,12 +147,6 @@ export default function Dashboard() {
                       <span className="font-medium">{entry.materialType}</span>
                       <span className="text-muted-foreground">•</span>
                       <span className="font-semibold text-primary">{Number(entry.weight).toFixed(1)} lbs</span>
-                      {entry.compostWeight && parseFloat(entry.compostWeight) > 0 && (
-                        <>
-                          <span className="text-muted-foreground">+</span>
-                          <span className="font-semibold text-muted-foreground">{Number(entry.compostWeight).toFixed(1)} lbs compost</span>
-                        </>
-                      )}
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
                       {new Date(entry.collectedAt).toLocaleDateString()}

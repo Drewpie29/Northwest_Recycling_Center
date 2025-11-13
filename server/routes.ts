@@ -3,7 +3,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
-import { insertRecyclingEntrySchema } from "@shared/schema";
+import { insertRecyclingEntrySchema, insertCompostEntrySchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -102,7 +102,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/compost', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user!.id;
-      const { month, weight, notes } = req.body;
+      
+      // Validate request body
+      const validation = insertCompostEntrySchema.safeParse(req.body);
+      if (!validation.success) {
+        const validationError = fromError(validation.error);
+        return res.status(400).json({ message: validationError.toString() });
+      }
+
+      const { month, weight, notes } = validation.data;
 
       // Check if entry already exists for this month
       const existing = await storage.getCompostEntryByUserAndMonth(userId, month);

@@ -116,7 +116,9 @@ export const compostEntries = pgTable("compost_entries", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueUserMonth: index("unique_user_month").on(table.userId, table.month).unique(),
+}));
 
 export const insertCompostEntrySchema = createInsertSchema(compostEntries).omit({
   id: true,
