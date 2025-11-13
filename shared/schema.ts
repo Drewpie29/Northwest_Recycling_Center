@@ -95,6 +95,7 @@ export const recyclingEntries = pgTable("recycling_entries", {
 
 export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).omit({
   id: true,
+  userId: true,
   createdAt: true,
 }).extend({
   weight: z.coerce.number().positive("Weight must be positive"),
@@ -123,6 +124,7 @@ export const compostEntries = pgTable("compost_entries", {
 
 export const insertCompostEntrySchema = createInsertSchema(compostEntries).omit({
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
