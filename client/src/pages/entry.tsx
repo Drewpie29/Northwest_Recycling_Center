@@ -39,7 +39,7 @@ export default function Entry() {
     resolver: zodResolver(insertRecyclingEntrySchema),
     defaultValues: {
       materialType: undefined,
-      weight: 0,
+      weight: "" as any,
       notes: "",
       collectedAt: new Date() as any,
     },
@@ -50,7 +50,7 @@ export default function Entry() {
     resolver: zodResolver(insertCompostEntrySchema),
     defaultValues: {
       month: getCurrentMonth(),
-      weight: 0,
+      weight: "" as any,
       notes: "",
     },
   });
@@ -58,6 +58,13 @@ export default function Entry() {
   // Fetch existing compost data for selected month
   const { data: existingCompost } = useQuery({
     queryKey: ['/api/compost', selectedMonth],
+    queryFn: async () => {
+      const response = await fetch(`/api/compost/${selectedMonth}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch compost entry');
+      }
+      return response.json();
+    },
     enabled: !!selectedMonth,
   });
 
@@ -72,7 +79,7 @@ export default function Entry() {
     } else {
       compostForm.reset({
         month: selectedMonth,
-        weight: 0,
+        weight: "" as any,
         notes: "",
       });
     }
@@ -92,7 +99,7 @@ export default function Entry() {
       });
       recyclingForm.reset({
         materialType: undefined,
-        weight: 0,
+        weight: "" as any,
         notes: "",
         collectedAt: new Date() as any,
       });
@@ -223,7 +230,8 @@ export default function Entry() {
                           step="0.1"
                           placeholder="0.0"
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value === 0 ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
                           data-testid="input-recycling-weight"
                         />
                       </FormControl>
@@ -335,7 +343,8 @@ export default function Entry() {
                           step="0.1"
                           placeholder="0.0"
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value === 0 ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
                           data-testid="input-compost-weight"
                         />
                       </FormControl>
