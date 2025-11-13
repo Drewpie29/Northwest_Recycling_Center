@@ -81,18 +81,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
-      const [entries, materialSummary] = await Promise.all([
+      const [entries, materialSummary, compostEntries] = await Promise.all([
         storage.getEntriesByUser(userId),
         storage.getMaterialSummary(userId),
+        storage.getCompostEntriesByUser(userId),
       ]);
 
       res.json({
         entries,
         materialSummary,
+        compostEntries,
       });
     } catch (error) {
       console.error("Error fetching reports:", error);
       res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Compost endpoints
+  app.post('/api/compost', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const { month, weight, notes } = req.body;
+
+      // Check if entry already exists for this month
+      const existing = await storage.getCompostEntryByUserAndMonth(userId, month);
+      
+      if (existing) {
+        // Update existing entry
+        const updated = await storage.updateCompostEntry(existing.id, weight, notes);
+        res.json(updated);
+      } else {
+        // Create new entry
+        const entry = await storage.createCompostEntry({
+          userId,
+          month,
+          weight,
+          notes,
+        });
+        res.json(entry);
+      }
+    } catch (error) {
+      console.error("Error saving compost entry:", error);
+      res.status(500).json({ message: "Failed to save compost entry" });
+    }
+  });
+
+  app.get('/api/compost', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const entries = await storage.getCompostEntriesByUser(userId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching compost entries:", error);
+      res.status(500).json({ message: "Failed to fetch compost entries" });
+    }
+  });
+
+  app.get('/api/compost/:month', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const { month } = req.params;
+      const entry = await storage.getCompostEntryByUserAndMonth(userId, month);
+      res.json(entry || null);
+    } catch (error) {
+      console.error("Error fetching compost entry:", error);
+      res.status(500).json({ message: "Failed to fetch compost entry" });
     }
   });
 

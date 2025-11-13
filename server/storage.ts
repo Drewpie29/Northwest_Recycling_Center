@@ -2,10 +2,13 @@
 import {
   users,
   recyclingEntries,
+  compostEntries,
   type User,
   type InsertUser,
   type RecyclingEntry,
   type InsertRecyclingEntry,
+  type CompostEntry,
+  type InsertCompostEntry,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -33,6 +36,12 @@ export interface IStorage {
   getTotalEntriesByUser(userId: string): Promise<number>;
   getTopMaterialByUser(userId: string): Promise<string>;
   getMaterialSummary(userId: string): Promise<Array<{ materialType: string; totalWeight: number; count: number }>>;
+  
+  // Compost operations
+  createCompostEntry(entry: InsertCompostEntry): Promise<CompostEntry>;
+  getCompostEntryByUserAndMonth(userId: string, month: string): Promise<CompostEntry | undefined>;
+  updateCompostEntry(id: string, weight: number, notes?: string): Promise<CompostEntry>;
+  getCompostEntriesByUser(userId: string): Promise<CompostEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -109,9 +118,9 @@ export class DatabaseStorage implements IStorage {
 
   async getTotalCompostWeightByUser(userId: string): Promise<number> {
     const result = await db
-      .select({ total: sql<number>`COALESCE(SUM(CAST(${recyclingEntries.compostWeight} AS NUMERIC)), 0)` })
-      .from(recyclingEntries)
-      .where(eq(recyclingEntries.userId, userId));
+      .select({ total: sql<number>`COALESCE(SUM(CAST(${compostEntries.weight} AS NUMERIC)), 0)` })
+      .from(compostEntries)
+      .where(eq(compostEntries.userId, userId));
     
     return Number(result[0]?.total || 0);
   }
@@ -157,6 +166,44 @@ export class DatabaseStorage implements IStorage {
       totalWeight: Number(r.totalWeight),
       count: Number(r.count),
     }));
+  }
+
+  // Compost operations
+  async createCompostEntry(entry: InsertCompostEntry): Promise<CompostEntry> {
+    const [newEntry] = await db
+      .insert(compostEntries)
+      .values(entry)
+      .returning();
+    return newEntry;
+  }
+
+  async getCompostEntryByUserAndMonth(userId: string, month: string): Promise<CompostEntry | undefined> {
+    const [entry] = await db
+      .select()
+      .from(compostEntries)
+      .where(sql`${compostEntries.userId} = ${userId} AND ${compostEntries.month} = ${month}`);
+    return entry;
+  }
+
+  async updateCompostEntry(id: string, weight: number, notes?: string): Promise<CompostEntry> {
+    const [updatedEntry] = await db
+      .update(compostEntries)
+      .set({ 
+        weight: weight.toString(),
+        notes: notes,
+        updatedAt: new Date(),
+      })
+      .where(eq(compostEntries.id, id))
+      .returning();
+    return updatedEntry;
+  }
+
+  async getCompostEntriesByUser(userId: string): Promise<CompostEntry[]> {
+    return await db
+      .select()
+      .from(compostEntries)
+      .where(eq(compostEntries.userId, userId))
+      .orderBy(desc(compostEntries.month));
   }
 }
 

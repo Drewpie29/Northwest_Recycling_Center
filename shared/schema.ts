@@ -86,8 +86,7 @@ export const recyclingEntries = pgTable("recycling_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   materialType: materialTypeEnum("material_type").notNull(),
-  weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // in pounds - recyclable materials
-  compostWeight: decimal("compost_weight", { precision: 10, scale: 2 }), // in pounds - compost (not sold)
+  weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // in pounds
   notes: text("notes"),
   collectedAt: timestamp("collected_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -98,7 +97,6 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
   createdAt: true,
 }).extend({
   weight: z.coerce.number().positive("Weight must be positive"),
-  compostWeight: z.coerce.number().nonnegative("Compost weight must be non-negative").optional(),
   materialType: z.enum(MATERIAL_TYPES, {
     errorMap: () => ({ message: "Please select a valid material type" }),
   }),
@@ -108,3 +106,27 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
 
 export type InsertRecyclingEntry = z.infer<typeof insertRecyclingEntrySchema>;
 export type RecyclingEntry = typeof recyclingEntries.$inferSelect;
+
+// Compost entries table - tracks monthly compost totals
+export const compostEntries = pgTable("compost_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  month: varchar("month").notNull(), // Format: YYYY-MM (e.g., "2025-01")
+  weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // in pounds
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCompostEntrySchema = createInsertSchema(compostEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  weight: z.coerce.number().positive("Weight must be positive"),
+  notes: z.string().optional(),
+});
+
+export type InsertCompostEntry = z.infer<typeof insertCompostEntrySchema>;
+export type CompostEntry = typeof compostEntries.$inferSelect;
