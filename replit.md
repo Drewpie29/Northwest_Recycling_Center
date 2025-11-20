@@ -62,6 +62,8 @@ RESTful endpoints organized by domain:
 - `/api/stats` - Dashboard statistics aggregation
 - `/api/reports` - Reporting data with material and location summaries
 - `/api/entries` - CRUD operations for recycling entries
+- `/api/material-categories` - Get active material categories (authenticated)
+- `/api/admin/material-categories` - Full CRUD for material categories (admin only)
 
 **Data Access Layer:**
 The `storage.ts` module implements a repository pattern (`IStorage` interface) with `DatabaseStorage` as the concrete implementation. This abstraction separates business logic from database operations and enables easier testing or database swapping.
@@ -77,11 +79,12 @@ The `storage.ts` module implements a repository pattern (`IStorage` interface) w
 Core tables:
 1. `sessions` - Stores Express session data (required for username/password authentication)
 2. `users` - User profiles with username/password credentials, role (admin/technician), and isActive status
-3. `recycling_entries` - Core domain data tracking individual recycling activities (conceptually "bales")
-4. `compost_entries` - Monthly compost tracking with unique user+month constraint
+3. `material_categories` - Dynamic material categories with soft-delete (isActive flag)
+4. `recycling_entries` - Core domain data tracking individual recycling activities (conceptually "bales") with foreign key to material_categories
+5. `compost_entries` - Monthly compost tracking with unique user+month constraint
 
-**Material Types:**
-The system tracks 12 specific categories of recyclable materials:
+**Material Categories:**
+The system uses database-managed material categories instead of hardcoded enums. Administrators can add new categories and deactivate existing ones through the admin interface at `/categories`. The system starts with 12 pre-populated categories:
 - Aluminum
 - Cardboard
 - Glass
@@ -95,14 +98,15 @@ The system tracks 12 specific categories of recyclable materials:
 - Scrap Metal
 - Other - Recycled
 
-These material types are enforced at the database level using a PostgreSQL enum and validated on the frontend using Zod schemas.
+Categories use a soft-delete pattern with the `isActive` integer field (1=active, 0=inactive). Inactive categories are hidden from entry forms but preserved for historical data integrity.
 
 **Key Design Decisions:**
 - UUID primary keys for all tables using PostgreSQL's `gen_random_uuid()`
 - `decimal(10, 2)` for weight measurements to ensure precision
 - Timestamps for audit trails (`createdAt`, `collectedAt`)
-- Foreign key relationships enforce referential integrity (entries → users)
-- Material types use PostgreSQL enum for data integrity and validation
+- Foreign key relationships enforce referential integrity (entries → users, entries → material_categories)
+- Material categories stored in database table with soft-delete pattern for flexibility and historical preservation
+- Category names enforced as unique at database level to prevent duplicates
 
 **Schema Validation:**
 Drizzle-Zod integration generates Zod schemas from database schema, ensuring consistent validation between database constraints and API input validation.
