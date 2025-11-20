@@ -2,8 +2,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./auth";
-import { insertRecyclingEntrySchema, insertCompostEntrySchema } from "@shared/schema";
+import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
+import { insertRecyclingEntrySchema, insertCompostEntrySchema, insertUserSchema, updateUserSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -155,6 +155,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching compost entry:", error);
       res.status(500).json({ message: "Failed to fetch compost entry" });
+    }
+  });
+
+  // Admin-only routes for user management
+  app.get('/api/admin/users', isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Remove passwords from response
+      const safeUsers = users.map(({ password, ...user }) => user);
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/admin/users', isAdmin, async (req: any, res) => {
+    try {
+      // Validate request body
+      const validation = insertUserSchema.safeParse(req.body);
+      if (!validation.success) {
+        const validationError = fromError(validation.error);
+        return res.status(400).json({ message: validationError.toString() });
+      }
+
+      // Check if username already exists
+      const existing = await storage.getUserByUsername(validation.data.username);
+      if (existing) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Create user with hashed password
+      const user = await storage.createUser({
+        ...validation.data,
+        password: await hashPassword(validation.data.password),
+      });
+
+      // Return user without password
+      const { password, ...safeUser } = user;
+      res.status(201).json(safeUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id', isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Validate request body
+      const validation = updateUserSchema.safeParse(req.body);
+      if (!validation.success) {
+        const validationError = fromError(validation.error);
+        return res.status(400).json({ message: validationError.toString() });
+      }
+
+      // Verify user exists
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update user with validated data
+      const updatedUser = await storage.updateUser(id, validation.data);
+      
+      // Return user without password
+      const { password, ...safeUser } = updatedUser;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
     }
   });
 

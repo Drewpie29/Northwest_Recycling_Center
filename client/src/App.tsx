@@ -13,6 +13,7 @@ import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import Entry from "@/pages/entry";
 import Reports from "@/pages/reports";
+import Users from "@/pages/users";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/entry" component={Entry} />
       <ProtectedRoute path="/reports" component={Reports} />
+      <ProtectedRoute path="/users" component={Users} />
       <Route component={NotFound} />
     </Switch>
   );

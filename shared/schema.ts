@@ -89,7 +89,16 @@ export const insertUserSchema = createInsertSchema(users).omit({
   role: z.enum(["admin", "technician"]).default("technician"),
 });
 
+export const updateUserSchema = z.object({
+  isActive: z.coerce.number().int().min(0).max(1).optional(),
+  role: z.enum(["admin", "technician"]).optional(),
+  email: z.string().trim().email().min(1).optional(),
+  firstName: z.string().trim().min(1).optional(),
+  lastName: z.string().trim().min(1).optional(),
+}).strict();
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type User = typeof users.$inferSelect;
 
 // Recycling entries table - tracks individual recycling activities
