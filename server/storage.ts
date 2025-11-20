@@ -32,9 +32,12 @@ export interface IStorage {
   
   // Recycling entry operations
   createEntry(entry: InsertRecyclingEntry): Promise<RecyclingEntry>;
+  getEntry(id: string): Promise<RecyclingEntry | undefined>;
   getEntriesByUser(userId: string): Promise<RecyclingEntryWithCategory[]>;
   getAllEntries(): Promise<RecyclingEntryWithCategory[]>;
   getRecentEntries(userId: string, limit: number): Promise<RecyclingEntryWithCategory[]>;
+  updateEntry(id: string, updates: Partial<Pick<RecyclingEntry, 'materialCategoryId' | 'weight' | 'notes' | 'collectedAt'>>): Promise<RecyclingEntry>;
+  deleteEntry(id: string): Promise<void>;
   
   // Statistics operations
   getTotalWeightByUser(userId: string): Promise<number>;
@@ -107,6 +110,14 @@ export class DatabaseStorage implements IStorage {
     return newEntry;
   }
 
+  async getEntry(id: string): Promise<RecyclingEntry | undefined> {
+    const [entry] = await db
+      .select()
+      .from(recyclingEntries)
+      .where(eq(recyclingEntries.id, id));
+    return entry;
+  }
+
   async getEntriesByUser(userId: string): Promise<RecyclingEntryWithCategory[]> {
     const results = await db
       .select({
@@ -164,6 +175,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(recyclingEntries.collectedAt))
       .limit(limit);
     return results;
+  }
+
+  async updateEntry(id: string, updates: Partial<Pick<RecyclingEntry, 'materialCategoryId' | 'weight' | 'notes' | 'collectedAt'>>): Promise<RecyclingEntry> {
+    const [updatedEntry] = await db
+      .update(recyclingEntries)
+      .set(updates)
+      .where(eq(recyclingEntries.id, id))
+      .returning();
+    return updatedEntry;
+  }
+
+  async deleteEntry(id: string): Promise<void> {
+    await db
+      .delete(recyclingEntries)
+      .where(eq(recyclingEntries.id, id));
   }
 
   // Statistics operations

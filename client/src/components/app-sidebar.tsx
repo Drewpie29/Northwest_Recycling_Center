@@ -1,4 +1,4 @@
-import { Home, PlusCircle, BarChart3, LogOut, Users, Recycle } from "lucide-react";
+import { Home, PlusCircle, BarChart3, LogOut, Users, Recycle, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -27,6 +27,11 @@ const menuItems = [
     title: "Log Bale",
     url: "/entry",
     icon: PlusCircle,
+  },
+  {
+    title: "My Bales",
+    url: "/bales",
+    icon: Package,
   },
   {
     title: "Reports",

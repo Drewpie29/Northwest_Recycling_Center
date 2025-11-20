@@ -76,6 +76,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update a recycling entry (with ownership check)
+  app.patch('/api/entries/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const userRole = req.user!.role;
+      const entryId = req.params.id;
+      
+      // Get the existing entry to check ownership
+      const existingEntry = await storage.getEntry(entryId);
+      if (!existingEntry) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+      
+      // Authorization: technicians can only edit their own entries, admins can edit any
+      if (userRole !== 'admin' && existingEntry.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own entries" });
+      }
+      
+      // Validate updates using partial schema (allow partial updates)
+      const updateSchema = insertRecyclingEntrySchema.partial();
+      const validation = updateSchema.safeParse(req.body);
+      if (!validation.success) {
+        const validationError = fromError(validation.error);
+        return res.status(400).json({ message: validationError.toString() });
+      }
+      
+      // Convert weight to string for database storage
+      const updates: any = { ...validation.data };
+      if (updates.weight !== undefined) {
+        updates.weight = updates.weight.toString();
+      }
+      
+      await storage.updateEntry(entryId, updates);
+      
+      // Refetch with joined data using the bale owner's ID (not the acting user's ID)
+      // This ensures admins can see the updated bale even when editing another user's entry
+      const updatedEntries = await storage.getEntriesByUser(existingEntry.userId);
+      const updatedEntry = updatedEntries.find(e => e.id === entryId);
+      
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error("Error updating entry:", error);
+      res.status(500).json({ message: "Failed to update entry" });
+    }
+  });
+
+  // Delete a recycling entry (with ownership check)
+  app.delete('/api/entries/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const userRole = req.user!.role;
+      const entryId = req.params.id;
+      
+      // Get the existing entry to check ownership
+      const existingEntry = await storage.getEntry(entryId);
+      if (!existingEntry) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+      
+      // Authorization: technicians can only delete their own entries, admins can delete any
+      if (userRole !== 'admin' && existingEntry.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own entries" });
+      }
+      
+      await storage.deleteEntry(entryId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting entry:", error);
+      res.status(500).json({ message: "Failed to delete entry" });
+    }
+  });
+
   // Reports endpoint with detailed summaries
   app.get('/api/reports', isAuthenticated, async (req: any, res) => {
     try {

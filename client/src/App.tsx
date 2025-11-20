@@ -15,6 +15,7 @@ import Entry from "@/pages/entry";
 import Reports from "@/pages/reports";
 import Users from "@/pages/users";
 import Categories from "@/pages/categories";
+import Bales from "@/pages/bales";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/entry" component={Entry} />
+      <ProtectedRoute path="/bales" component={Bales} />
       <ProtectedRoute path="/reports" component={Reports} />
       <ProtectedRoute path="/users" component={Users} />
       <ProtectedRoute path="/categories" component={Categories} />
