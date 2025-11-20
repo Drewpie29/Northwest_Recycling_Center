@@ -84,6 +84,28 @@ export default function Users() {
     },
   });
 
+  // Update user role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: "admin" | "technician" }) => {
+      const res = await apiRequest('PATCH', `/api/admin/users/${id}`, { role });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Success",
+        description: "User role updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user role",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (data: InsertUser) => {
     createUserMutation.mutate(data);
   };
@@ -91,6 +113,10 @@ export default function Users() {
   const handleToggleActive = (userId: string, currentStatus: number) => {
     const newStatus = currentStatus !== 1; // Convert to boolean
     toggleActiveMutation.mutate({ id: userId, isActive: newStatus });
+  };
+
+  const handleRoleChange = (userId: string, newRole: "admin" | "technician") => {
+    updateRoleMutation.mutate({ id: userId, role: newRole });
   };
 
   return (
@@ -309,12 +335,22 @@ export default function Users() {
                         {user.email || "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={user.role === "admin" ? "default" : "secondary"}
-                          data-testid={`badge-role-${user.id}`}
+                        <Select
+                          value={user.role}
+                          onValueChange={(value: "admin" | "technician") => handleRoleChange(user.id, value)}
+                          disabled={updateRoleMutation.isPending}
                         >
-                          {user.role}
-                        </Badge>
+                          <SelectTrigger 
+                            className="w-40"
+                            data-testid={`select-role-${user.id}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Administrator</SelectItem>
+                            <SelectItem value="technician">Technician</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Badge
