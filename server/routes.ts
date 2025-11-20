@@ -3,7 +3,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
-import { insertRecyclingEntrySchema, insertCompostEntrySchema, insertUserSchema, updateUserSchema } from "@shared/schema";
+import { insertRecyclingEntrySchema, insertCompostEntrySchema, insertUserSchema, updateUserSchema, insertMaterialCategorySchema, updateMaterialCategorySchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -227,6 +227,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // ===== Material Category Routes =====
+
+  // Get active material categories (for all users)
+  app.get('/api/material-categories', isAuthenticated, async (_req, res) => {
+    try {
+      const categories = await storage.getActiveMaterialCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching active categories:", error);
+      res.status(500).json({ message: "Failed to fetch material categories" });
+    }
+  });
+
+  // Get all material categories (admin only)
+  app.get('/api/admin/material-categories', isAdmin, async (_req, res) => {
+    try {
+      const categories = await storage.getAllMaterialCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching all categories:", error);
+      res.status(500).json({ message: "Failed to fetch material categories" });
+    }
+  });
+
+  // Create new material category (admin only)
+  app.post('/api/admin/material-categories', isAdmin, async (req, res) => {
+    try {
+      // Validate request body
+      const validation = insertMaterialCategorySchema.safeParse(req.body);
+      if (!validation.success) {
+        const validationError = fromError(validation.error);
+        return res.status(400).json({ message: validationError.toString() });
+      }
+
+      const category = await storage.createMaterialCategory(validation.data);
+      res.status(201).json(category);
+    } catch (error: any) {
+      console.error("Error creating material category:", error);
+      // Check for unique constraint violation
+      if (error.code === '23505') {
+        return res.status(400).json({ message: "Category name already exists" });
+      }
+      res.status(500).json({ message: "Failed to create material category" });
+    }
+  });
+
+  // Update material category (admin only)
+  app.patch('/api/admin/material-categories/:id', isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Validate request body
+      const validation = updateMaterialCategorySchema.safeParse(req.body);
+      if (!validation.success) {
+        const validationError = fromError(validation.error);
+        return res.status(400).json({ message: validationError.toString() });
+      }
+
+      const updatedCategory = await storage.updateMaterialCategory(id, validation.data);
+      res.json(updatedCategory);
+    } catch (error: any) {
+      console.error("Error updating material category:", error);
+      // Check for unique constraint violation
+      if (error.code === '23505') {
+        return res.status(400).json({ message: "Category name already exists" });
+      }
+      res.status(500).json({ message: "Failed to update material category" });
     }
   });
 

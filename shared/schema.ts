@@ -20,22 +20,7 @@ export const userRoleEnum = pgEnum("user_role", [
   "technician",
 ]);
 
-// Material types for recycling collection
-export const materialTypeEnum = pgEnum("material_type", [
-  "Aluminum",
-  "Cardboard",
-  "Glass",
-  "Paper - Mixed",
-  "Paper - Books",
-  "Paper - Newspaper",
-  "Paper-White",
-  "Plastic - #1 PET",
-  "Plastic - #2 Colored",
-  "Plastic - #2 Natural",
-  "Scrap Metal",
-  "Other - Recycled",
-]);
-
+// Keep this for data migration purposes
 export const MATERIAL_TYPES = [
   "Aluminum",
   "Cardboard",
@@ -101,11 +86,36 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// Material categories table - dynamic list of recyclable materials
+export const materialCategories = pgTable("material_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").unique().notNull(),
+  isActive: integer("is_active").notNull().default(1), // 1 = active, 0 = inactive
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMaterialCategorySchema = createInsertSchema(materialCategories).omit({
+  id: true,
+  createdAt: true,
+  isActive: true,
+}).extend({
+  name: z.string().trim().min(1, "Category name is required"),
+});
+
+export const updateMaterialCategorySchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  isActive: z.coerce.number().int().min(0).max(1).optional(),
+}).strict();
+
+export type InsertMaterialCategory = z.infer<typeof insertMaterialCategorySchema>;
+export type UpdateMaterialCategory = z.infer<typeof updateMaterialCategorySchema>;
+export type MaterialCategory = typeof materialCategories.$inferSelect;
+
 // Recycling entries table - tracks individual recycling activities
 export const recyclingEntries = pgTable("recycling_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  materialType: materialTypeEnum("material_type").notNull(),
+  materialCategoryId: varchar("material_category_id").notNull().references(() => materialCategories.id),
   weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // in pounds
   notes: text("notes"),
   collectedAt: timestamp("collected_at").defaultNow().notNull(),
@@ -118,9 +128,7 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
   createdAt: true,
 }).extend({
   weight: z.coerce.number().positive("Weight must be positive"),
-  materialType: z.enum(MATERIAL_TYPES, {
-    errorMap: () => ({ message: "Please select a valid material type" }),
-  }),
+  materialCategoryId: z.string().uuid("Please select a valid material category"),
   notes: z.string().optional(),
   collectedAt: z.coerce.date(),
 });

@@ -3,12 +3,15 @@ import {
   users,
   recyclingEntries,
   compostEntries,
+  materialCategories,
   type User,
   type InsertUser,
   type RecyclingEntry,
   type InsertRecyclingEntry,
   type CompostEntry,
   type InsertCompostEntry,
+  type MaterialCategory,
+  type InsertMaterialCategory,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -44,6 +47,12 @@ export interface IStorage {
   getCompostEntryByUserAndMonth(userId: string, month: string): Promise<CompostEntry | undefined>;
   updateCompostEntry(id: string, weight: number, notes?: string): Promise<CompostEntry>;
   getCompostEntriesByUser(userId: string): Promise<CompostEntry[]>;
+  
+  // Material category operations
+  getAllMaterialCategories(): Promise<MaterialCategory[]>;
+  getActiveMaterialCategories(): Promise<MaterialCategory[]>;
+  createMaterialCategory(category: InsertMaterialCategory): Promise<MaterialCategory>;
+  updateMaterialCategory(id: string, updates: Partial<Pick<MaterialCategory, 'name' | 'isActive'>>): Promise<MaterialCategory>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -152,12 +161,13 @@ export class DatabaseStorage implements IStorage {
   async getTopMaterialByUser(userId: string): Promise<string> {
     const result = await db
       .select({
-        materialType: recyclingEntries.materialType,
+        materialType: materialCategories.name,
         total: sql<number>`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`,
       })
       .from(recyclingEntries)
+      .innerJoin(materialCategories, eq(recyclingEntries.materialCategoryId, materialCategories.id))
       .where(eq(recyclingEntries.userId, userId))
-      .groupBy(recyclingEntries.materialType)
+      .groupBy(materialCategories.name)
       .orderBy(desc(sql`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`))
       .limit(1);
     
@@ -167,13 +177,14 @@ export class DatabaseStorage implements IStorage {
   async getMaterialSummary(userId: string): Promise<Array<{ materialType: string; totalWeight: number; count: number }>> {
     const result = await db
       .select({
-        materialType: recyclingEntries.materialType,
+        materialType: materialCategories.name,
         totalWeight: sql<number>`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`,
         count: sql<number>`COUNT(*)`,
       })
       .from(recyclingEntries)
+      .innerJoin(materialCategories, eq(recyclingEntries.materialCategoryId, materialCategories.id))
       .where(eq(recyclingEntries.userId, userId))
-      .groupBy(recyclingEntries.materialType)
+      .groupBy(materialCategories.name)
       .orderBy(desc(sql`SUM(CAST(${recyclingEntries.weight} AS NUMERIC))`));
     
     return result.map(r => ({
@@ -219,6 +230,39 @@ export class DatabaseStorage implements IStorage {
       .from(compostEntries)
       .where(eq(compostEntries.userId, userId))
       .orderBy(desc(compostEntries.month));
+  }
+
+  // Material category operations
+  async getAllMaterialCategories(): Promise<MaterialCategory[]> {
+    return await db
+      .select()
+      .from(materialCategories)
+      .orderBy(materialCategories.name);
+  }
+
+  async getActiveMaterialCategories(): Promise<MaterialCategory[]> {
+    return await db
+      .select()
+      .from(materialCategories)
+      .where(eq(materialCategories.isActive, 1))
+      .orderBy(materialCategories.name);
+  }
+
+  async createMaterialCategory(category: InsertMaterialCategory): Promise<MaterialCategory> {
+    const [newCategory] = await db
+      .insert(materialCategories)
+      .values(category)
+      .returning();
+    return newCategory;
+  }
+
+  async updateMaterialCategory(id: string, updates: Partial<Pick<MaterialCategory, 'name' | 'isActive'>>): Promise<MaterialCategory> {
+    const [updatedCategory] = await db
+      .update(materialCategories)
+      .set(updates)
+      .where(eq(materialCategories.id, id))
+      .returning();
+    return updatedCategory;
   }
 }
 

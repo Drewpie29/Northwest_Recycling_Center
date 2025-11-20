@@ -1,4 +1,4 @@
-import { Home, PlusCircle, BarChart3, LogOut, Users } from "lucide-react";
+import { Home, PlusCircle, BarChart3, LogOut, Users, Recycle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -40,6 +40,11 @@ const adminMenuItems = [
     title: "Users",
     url: "/users",
     icon: Users,
+  },
+  {
+    title: "Categories",
+    url: "/categories",
+    icon: Recycle,
   },
 ];
 

@@ -6,7 +6,7 @@ import {
   insertCompostEntrySchema,
   type InsertRecyclingEntry,
   type InsertCompostEntry,
-  MATERIAL_TYPES 
+  type MaterialCategory
 } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,11 +42,16 @@ export default function Entry() {
   
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
+  // Fetch active material categories
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<MaterialCategory[]>({
+    queryKey: ['/api/material-categories'],
+  });
+
   // Recycling form
   const recyclingForm = useForm<InsertRecyclingEntry>({
     resolver: zodResolver(insertRecyclingEntrySchema),
     defaultValues: {
-      materialType: undefined,
+      materialCategoryId: undefined,
       weight: 0,
       notes: "",
       collectedAt: getCentralTime() as any,
@@ -106,7 +111,7 @@ export default function Entry() {
         description: "Recycling entry added successfully",
       });
       recyclingForm.reset({
-        materialType: undefined,
+        materialCategoryId: undefined,
         weight: 0,
         notes: "",
         collectedAt: getCentralTime() as any,
@@ -209,20 +214,30 @@ export default function Entry() {
               )} className="space-y-4">
                 <FormField
                   control={recyclingForm.control}
-                  name="materialType"
+                  name="materialCategoryId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Material Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={categoriesLoading || categories.length === 0}
+                      >
                         <FormControl>
                           <SelectTrigger data-testid="select-material-type">
-                            <SelectValue placeholder="Select material type" />
+                            <SelectValue placeholder={
+                              categoriesLoading 
+                                ? "Loading categories..." 
+                                : categories.length === 0 
+                                ? "No categories available" 
+                                : "Select material type"
+                            } />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {MATERIAL_TYPES.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
