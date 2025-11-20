@@ -28,6 +28,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUser(id: string, updates: Partial<Pick<User, 'isActive' | 'role' | 'email' | 'firstName' | 'lastName'>>): Promise<User>;
+  deleteUser(id: string): Promise<void>;
   sessionStore: session.SessionStore;
   
   // Recycling entry operations
@@ -99,6 +100,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Recycling entry operations
