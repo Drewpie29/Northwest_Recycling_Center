@@ -43,7 +43,18 @@ The design follows a system-based approach prioritizing efficiency and data clar
 - PostgreSQL session store for persistent login sessions
 
 **Authentication Flow:**
-The application uses username/password authentication with Passport.js local strategy. User passwords are securely hashed using Node.js crypto.scrypt with random salts. Sessions are stored in PostgreSQL with a 7-day TTL. The `isAuthenticated` middleware protects all API routes requiring user context.
+The application uses username/password authentication with Passport.js local strategy. User passwords are securely hashed using Node.js crypto.scrypt with random salts. Sessions are stored in PostgreSQL with a 7-day TTL. 
+
+**Role-Based Access Control:**
+The system implements two user roles:
+- **Administrator**: Full system access including user management, material category management, sales tracking, and all bale operations
+- **Technician**: Limited access to create and edit their own bale entries only
+
+Middleware functions protect routes:
+- `isAuthenticated` - Requires any logged-in user
+- `isAdmin` - Requires administrator role (403 if not admin)
+
+User accounts can be deactivated by admins, preventing login while preserving historical data.
 
 **API Structure:**
 RESTful endpoints organized by domain:
@@ -63,10 +74,11 @@ The `storage.ts` module implements a repository pattern (`IStorage` interface) w
 - WebSocket-based connection pooling for serverless environments
 
 **Schema Design:**
-Three primary tables:
+Core tables:
 1. `sessions` - Stores Express session data (required for username/password authentication)
-2. `users` - User profiles with username/password credentials
-3. `recycling_entries` - Core domain data tracking individual recycling activities
+2. `users` - User profiles with username/password credentials, role (admin/technician), and isActive status
+3. `recycling_entries` - Core domain data tracking individual recycling activities (conceptually "bales")
+4. `compost_entries` - Monthly compost tracking with unique user+month constraint
 
 **Material Types:**
 The system tracks 12 specific categories of recyclable materials:

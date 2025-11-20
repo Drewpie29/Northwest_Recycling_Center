@@ -14,6 +14,12 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// User roles for access control
+export const userRoleEnum = pgEnum("user_role", [
+  "admin",
+  "technician",
+]);
+
 // Material types for recycling collection
 export const materialTypeEnum = pgEnum("material_type", [
   "Aluminum",
@@ -66,6 +72,8 @@ export const users = pgTable("users", {
   email: varchar("email"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
+  role: userRoleEnum("role").notNull().default("technician"),
+  isActive: integer("is_active").notNull().default(1), // 1 = active, 0 = deactivated
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -74,9 +82,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  isActive: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["admin", "technician"]).default("technician"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
