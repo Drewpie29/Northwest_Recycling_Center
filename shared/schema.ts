@@ -136,6 +136,12 @@ export const insertRecyclingEntrySchema = createInsertSchema(recyclingEntries).o
 export type InsertRecyclingEntry = z.infer<typeof insertRecyclingEntrySchema>;
 export type RecyclingEntry = typeof recyclingEntries.$inferSelect;
 
+// Extended type for API responses that includes joined data
+export type RecyclingEntryWithCategory = RecyclingEntry & {
+  materialType: string; // Material category name from join
+  userName?: string; // User's full name from join (optional, for admin views)
+};
+
 // Compost entries table - tracks monthly compost totals
 export const compostEntries = pgTable("compost_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

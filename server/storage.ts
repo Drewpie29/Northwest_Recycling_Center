@@ -7,6 +7,7 @@ import {
   type User,
   type InsertUser,
   type RecyclingEntry,
+  type RecyclingEntryWithCategory,
   type InsertRecyclingEntry,
   type CompostEntry,
   type InsertCompostEntry,
@@ -31,9 +32,9 @@ export interface IStorage {
   
   // Recycling entry operations
   createEntry(entry: InsertRecyclingEntry): Promise<RecyclingEntry>;
-  getEntriesByUser(userId: string): Promise<RecyclingEntry[]>;
-  getAllEntries(): Promise<RecyclingEntry[]>;
-  getRecentEntries(userId: string, limit: number): Promise<RecyclingEntry[]>;
+  getEntriesByUser(userId: string): Promise<RecyclingEntryWithCategory[]>;
+  getAllEntries(): Promise<RecyclingEntryWithCategory[]>;
+  getRecentEntries(userId: string, limit: number): Promise<RecyclingEntryWithCategory[]>;
   
   // Statistics operations
   getTotalWeightByUser(userId: string): Promise<number>;
@@ -106,28 +107,63 @@ export class DatabaseStorage implements IStorage {
     return newEntry;
   }
 
-  async getEntriesByUser(userId: string): Promise<RecyclingEntry[]> {
-    return await db
-      .select()
+  async getEntriesByUser(userId: string): Promise<RecyclingEntryWithCategory[]> {
+    const results = await db
+      .select({
+        id: recyclingEntries.id,
+        createdAt: recyclingEntries.createdAt,
+        userId: recyclingEntries.userId,
+        materialCategoryId: recyclingEntries.materialCategoryId,
+        weight: recyclingEntries.weight,
+        notes: recyclingEntries.notes,
+        collectedAt: recyclingEntries.collectedAt,
+        materialType: materialCategories.name,
+      })
       .from(recyclingEntries)
+      .innerJoin(materialCategories, eq(recyclingEntries.materialCategoryId, materialCategories.id))
       .where(eq(recyclingEntries.userId, userId))
       .orderBy(desc(recyclingEntries.collectedAt));
+    return results;
   }
 
-  async getAllEntries(): Promise<RecyclingEntry[]> {
-    return await db
-      .select()
+  async getAllEntries(): Promise<RecyclingEntryWithCategory[]> {
+    const results = await db
+      .select({
+        id: recyclingEntries.id,
+        createdAt: recyclingEntries.createdAt,
+        userId: recyclingEntries.userId,
+        materialCategoryId: recyclingEntries.materialCategoryId,
+        weight: recyclingEntries.weight,
+        notes: recyclingEntries.notes,
+        collectedAt: recyclingEntries.collectedAt,
+        materialType: materialCategories.name,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+      })
       .from(recyclingEntries)
+      .innerJoin(materialCategories, eq(recyclingEntries.materialCategoryId, materialCategories.id))
+      .innerJoin(users, eq(recyclingEntries.userId, users.id))
       .orderBy(desc(recyclingEntries.collectedAt));
+    return results;
   }
 
-  async getRecentEntries(userId: string, limit: number): Promise<RecyclingEntry[]> {
-    return await db
-      .select()
+  async getRecentEntries(userId: string, limit: number): Promise<RecyclingEntryWithCategory[]> {
+    const results = await db
+      .select({
+        id: recyclingEntries.id,
+        createdAt: recyclingEntries.createdAt,
+        userId: recyclingEntries.userId,
+        materialCategoryId: recyclingEntries.materialCategoryId,
+        weight: recyclingEntries.weight,
+        notes: recyclingEntries.notes,
+        collectedAt: recyclingEntries.collectedAt,
+        materialType: materialCategories.name,
+      })
       .from(recyclingEntries)
+      .innerJoin(materialCategories, eq(recyclingEntries.materialCategoryId, materialCategories.id))
       .where(eq(recyclingEntries.userId, userId))
       .orderBy(desc(recyclingEntries.collectedAt))
       .limit(limit);
+    return results;
   }
 
   // Statistics operations

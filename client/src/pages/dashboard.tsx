@@ -4,14 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Recycle, Scale, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
-import type { RecyclingEntry } from "@shared/schema";
+import type { RecyclingEntryWithCategory } from "@shared/schema";
 
 interface DashboardStats {
   totalWeight: number;
   totalCompostWeight: number;
   totalEntries: number;
   topMaterial: string;
-  recentEntries: RecyclingEntry[];
+  recentEntries: RecyclingEntryWithCategory[];
 }
 
 export default function Dashboard() {
@@ -31,7 +31,7 @@ export default function Dashboard() {
         <Button asChild data-testid="button-add-entry">
           <Link href="/entry">
             <PlusCircle className="w-4 h-4 mr-2" />
-            Add Entry
+            Log Bale
           </Link>
         </Button>
       </div>
@@ -77,7 +77,7 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Total Entries</CardTitle>
+            <CardTitle className="text-lg font-medium">Total Bales</CardTitle>
             <Recycle className="w-5 h-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -88,7 +88,7 @@ export default function Dashboard() {
                 <div className="text-3xl font-bold" data-testid="text-total-entries">
                   {stats?.totalEntries || 0}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">recycling activities</p>
+                <p className="text-sm text-muted-foreground mt-1">bales logged</p>
               </>
             )}
           </CardContent>

@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { RecyclingEntry, CompostEntry } from "@shared/schema";
+import type { RecyclingEntryWithCategory, CompostEntry } from "@shared/schema";
 import { FileText, Download, Recycle, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +21,7 @@ interface MaterialSummary {
 }
 
 interface ReportsData {
-  entries: RecyclingEntry[];
+  entries: RecyclingEntryWithCategory[];
   materialSummary: MaterialSummary[];
   compostEntries: CompostEntry[];
 }

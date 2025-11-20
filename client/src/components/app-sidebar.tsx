@@ -24,7 +24,7 @@ const menuItems = [
     icon: Home,
   },
   {
-    title: "Log",
+    title: "Log Bale",
     url: "/entry",
     icon: PlusCircle,
   },
