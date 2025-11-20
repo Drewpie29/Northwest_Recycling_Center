@@ -61,7 +61,11 @@ RESTful endpoints organized by domain:
 - `/api/auth/*` - Authentication endpoints (user profile, login/logout)
 - `/api/stats` - Dashboard statistics aggregation
 - `/api/reports` - Reporting data with material and location summaries
-- `/api/entries` - CRUD operations for recycling entries
+- `/api/entries` - CRUD operations for recycling entries (bales):
+  - `GET /api/entries` - Fetch current user's bales (RecyclingEntryWithCategory[])
+  - `POST /api/entries` - Create new bale (auto-assigns current user's ID)
+  - `PATCH /api/entries/:id` - Update bale (ownership validation: admin can edit any, technician can edit own)
+  - `DELETE /api/entries/:id` - Delete bale (ownership validation: admin can delete any, technician can delete own)
 - `/api/material-categories` - Get active material categories (authenticated)
 - `/api/admin/material-categories` - Full CRUD for material categories (admin only)
 
@@ -80,8 +84,16 @@ Core tables:
 1. `sessions` - Stores Express session data (required for username/password authentication)
 2. `users` - User profiles with username/password credentials, role (admin/technician), and isActive status
 3. `material_categories` - Dynamic material categories with soft-delete (isActive flag)
-4. `recycling_entries` - Core domain data tracking individual recycling activities (conceptually "bales") with foreign key to material_categories
+4. `recycling_entries` - Core domain data tracking individual recycling activities (conceptually "bales") with foreign keys to material_categories and users
 5. `compost_entries` - Monthly compost tracking with unique user+month constraint
+
+**Bale Ownership Model:**
+Each recycling entry (bale) belongs to a specific user via the `userId` foreign key. The system enforces ownership-based access control:
+- **Technicians** can only view, edit, and delete their own bales
+- **Administrators** can view, edit, and delete any user's bales
+- The "My Bales" page (`/bales`) displays all bales owned by the current user with edit/delete actions
+- PATCH and DELETE endpoints validate ownership before allowing modifications (403 Forbidden if unauthorized)
+- When admins edit another user's bale, the backend refetches using the bale owner's ID to return complete data
 
 **Material Categories:**
 The system uses database-managed material categories instead of hardcoded enums. Administrators can add new categories and deactivate existing ones through the admin interface at `/categories`. The system starts with 12 pre-populated categories:
