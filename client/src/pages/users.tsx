@@ -393,9 +393,6 @@ export default function Users() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {user.isActive === 1 ? "Active" : "Inactive"}
-                          </span>
                           <Switch
                             checked={user.isActive === 1}
                             onCheckedChange={() => handleToggleActive(user.id, user.isActive)}
