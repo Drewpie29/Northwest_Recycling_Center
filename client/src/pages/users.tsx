@@ -8,7 +8,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema, type InsertUser, type User } from "@shared/schema";
@@ -66,28 +65,6 @@ export default function Users() {
     },
   });
 
-  // Toggle user active status mutation
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const res = await apiRequest('PATCH', `/api/admin/users/${id}`, { isActive: isActive ? 1 : 0 });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      toast({
-        title: "Success",
-        description: "User status updated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update user status",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ id, role }: { id: string; role: "admin" | "technician" }) => {
@@ -112,11 +89,6 @@ export default function Users() {
 
   const handleSubmit = (data: InsertUser) => {
     createUserMutation.mutate(data);
-  };
-
-  const handleToggleActive = (userId: string, currentStatus: number) => {
-    const newStatus = currentStatus !== 1; // Convert to boolean
-    toggleActiveMutation.mutate({ id: userId, isActive: newStatus });
   };
 
   const handleRoleChange = (userId: string, newRole: "admin" | "technician") => {
@@ -392,24 +364,16 @@ export default function Users() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Switch
-                            checked={user.isActive === 1}
-                            onCheckedChange={() => handleToggleActive(user.id, user.isActive)}
-                            disabled={toggleActiveMutation.isPending}
-                            data-testid={`switch-active-${user.id}`}
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setDeletingUserId(user.id)}
-                            disabled={user.id === currentUser?.id || deleteUserMutation.isPending}
-                            data-testid={`button-delete-${user.id}`}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setDeletingUserId(user.id)}
+                          disabled={user.id === currentUser?.id || deleteUserMutation.isPending}
+                          data-testid={`button-delete-${user.id}`}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
