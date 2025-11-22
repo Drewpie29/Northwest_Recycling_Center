@@ -319,7 +319,6 @@ export default function Users() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -354,14 +353,6 @@ export default function Users() {
                             <SelectItem value="technician">Technician</SelectItem>
                           </SelectContent>
                         </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={user.isActive === 1 ? "default" : "destructive"}
-                          data-testid={`badge-status-${user.id}`}
-                        >
-                          {user.isActive === 1 ? "Active" : "Deactivated"}
-                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
