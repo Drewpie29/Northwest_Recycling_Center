@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,8 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { RecyclingEntryWithCategory, CompostEntry } from "@shared/schema";
-import { FileText, Download, Recycle, Leaf } from "lucide-react";
+import { FileText, Download, Recycle, Leaf, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface MaterialSummary {
   materialType: string;
@@ -26,10 +29,59 @@ interface ReportsData {
   compostEntries: CompostEntry[];
 }
 
+type TimePeriod = "7days" | "30days" | "90days" | "all";
+
 export default function Reports() {
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("30days");
+  
   const { data, isLoading } = useQuery<ReportsData>({
     queryKey: ["/api/reports"],
   });
+
+  const getFilteredData = () => {
+    if (!data?.entries) return [];
+    
+    const now = new Date();
+    const cutoffDate = new Date();
+    
+    switch (timePeriod) {
+      case "7days":
+        cutoffDate.setDate(now.getDate() - 7);
+        break;
+      case "30days":
+        cutoffDate.setDate(now.getDate() - 30);
+        break;
+      case "90days":
+        cutoffDate.setDate(now.getDate() - 90);
+        break;
+      case "all":
+        return data.entries;
+    }
+    
+    return data.entries.filter(entry => 
+      new Date(entry.collectedAt) >= cutoffDate
+    );
+  };
+
+  const getChartData = () => {
+    const filtered = getFilteredData();
+    
+    const materialTotals = filtered.reduce((acc, entry) => {
+      const material = entry.materialType;
+      if (!acc[material]) {
+        acc[material] = 0;
+      }
+      acc[material] += Number(entry.weight);
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(materialTotals)
+      .map(([material, weight]) => ({
+        material,
+        weight: Number(weight.toFixed(1)),
+      }))
+      .sort((a, b) => b.weight - a.weight);
+  };
 
   const exportRecyclingData = () => {
     if (!data) return;
@@ -78,6 +130,8 @@ export default function Reports() {
     window.URL.revokeObjectURL(url);
   };
 
+  const chartData = getChartData();
+
   return (
     <div className="space-y-8">
       <div>
@@ -86,6 +140,70 @@ export default function Reports() {
           Detailed analytics and data export
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <CardTitle className="text-xl font-semibold">Recycling by Material</CardTitle>
+            </div>
+            <Select value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriod)}>
+              <SelectTrigger className="w-40" data-testid="select-time-period">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7days">Last 7 Days</SelectItem>
+                <SelectItem value="30days">Last 30 Days</SelectItem>
+                <SelectItem value="90days">Last 90 Days</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-80 w-full" />
+          ) : chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="material" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={120}
+                  className="text-xs"
+                />
+                <YAxis 
+                  label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
+                  className="text-sm"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px'
+                  }}
+                  formatter={(value: number) => [`${value} lbs`, 'Weight']}
+                />
+                <Legend />
+                <Bar 
+                  dataKey="weight" 
+                  fill="hsl(var(--primary))" 
+                  name="Weight (lbs)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12">
+              <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No data for selected period</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="max-w-2xl">
         <CardHeader>
